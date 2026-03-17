@@ -60,3 +60,12 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 - [x] Ensure the UI exposes the required `data-testid` selectors for Playwright-driven scenarios.
 - [x] Run and fix `pytest`, `ruff check .`, and `mypy src` for the implemented codebase.
 - [x] Perform the manual smoke path and the required Playwright scenarios for empty startup, upload, schema expand, sticky-header row browsing, pagination/page-size controls using `demo/gps-course.sqlite`, theme toggle, splitter drag, and invalid upload.
+
+## Milestone 7 - Cross-Platform CLI Packaging And UX
+
+- [x] Support `sqlite-browser [db_path]` while keeping `--db` and adding `-d` as compatible DB-path options.
+- [x] Keep the DB path inputs unambiguous by rejecting simultaneous positional and flag-based DB arguments.
+- [x] Extract browser launch URL handling so wildcard bind hosts open a loopback URL in the user's default browser.
+- [x] Update the README to document `sqlite-browser` as the primary CLI, with `pipx` and `pip install` user flows for macOS and Windows.
+- [x] Add an internal-use standalone packaging track with PyInstaller in `onedir` mode.
+- [x] Add automated verification for the expanded CLI surface and a packaged-artifact smoke check.

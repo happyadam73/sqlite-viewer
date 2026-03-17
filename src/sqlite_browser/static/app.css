@@ -693,6 +693,14 @@ select {
     border-radius: 0.75rem;
   }
 
+  .pane--explorer {
+    height: clamp(13rem, 26dvh, 18rem);
+  }
+
+  .pane--data {
+    height: clamp(24rem, 58dvh, 36rem);
+  }
+
   .pane-splitter {
     display: none;
   }

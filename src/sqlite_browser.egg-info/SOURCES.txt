@@ -19,4 +19,7 @@ src/sqlite_browser/routes/pages.py
 src/sqlite_browser/static/app.css
 src/sqlite_browser/static/app.js
 src/sqlite_browser/templates/index.html
+tests/test_api.py
+tests/test_cli.py
+tests/test_db.py
 tests/test_smoke.py

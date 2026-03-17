@@ -13,6 +13,8 @@ Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
 Requires-Dist: httpx<1.0,>=0.27; extra == "dev"
 Requires-Dist: ruff<1.0,>=0.6; extra == "dev"
 Requires-Dist: mypy<2.0,>=1.10; extra == "dev"
+Provides-Extra: packaging
+Requires-Dist: pyinstaller<7.0,>=6.0; extra == "packaging"
 
 # SQLite Browser
 
@@ -31,32 +33,104 @@ A lightweight local web app for browsing SQLite files in the browser.
 ## Requirements
 - Python 3.13
 
-## Quick start
+## Install as a CLI
 
-### macOS / Linux
+`sqlite-browser` is the primary command-line entrypoint. After installation, you can launch the app with or without a database path and it will open in your default browser.
+
+### macOS with Homebrew Python and `pipx` (recommended)
+
+Do not run the `pipx` install command from inside an active virtualenv.
+
 ```bash
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev]
+brew install pipx
+pipx ensurepath
+pipx install --python python3.13 .
+sqlite-browser demo/test.sqlite
+```
+
+If `sqlite-browser` is still not found after `pipx ensurepath`, open a new terminal and try again.
+
+### Windows PowerShell with `pipx` (recommended)
+```powershell
+py -3.13 -m pip install --user pipx
+py -3.13 -m pipx ensurepath
+pipx install .
+sqlite-browser demo\test.sqlite
+```
+
+### Dedicated virtualenv fallback
+
+If you do not want to use `pipx`, install into a dedicated virtualenv instead of the system Python.
+
+### macOS / Linux with a dedicated virtualenv
+```bash
+python3.13 -m venv .cli-venv
+source .cli-venv/bin/activate
+pip install .
+sqlite-browser demo/test.sqlite
+```
+
+### Windows PowerShell with a dedicated virtualenv
+```powershell
+py -3.13 -m venv .cli-venv
+.cli-venv\Scripts\Activate.ps1
+pip install .
+sqlite-browser demo\test.sqlite
+```
+
+## Alternate invocation
+
+`python -m sqlite_browser` still works if you prefer to run the module directly:
+
+```bash
 python -m sqlite_browser --db demo/test.sqlite
 ```
 
-### Windows PowerShell
-```powershell
-py -3.13 -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -e .[dev]
-python -m sqlite_browser --db demo/test.sqlite
-```
+The CLI also supports:
+- `sqlite-browser`
+- `sqlite-browser demo/test.sqlite`
+- `sqlite-browser --db demo/test.sqlite`
+- `sqlite-browser -d demo/test.sqlite`
+- `sqlite-browser --no-browser`
 
 ## Run without a DB
 ```bash
-python -m sqlite_browser
+sqlite-browser
 ```
 
 Then use the **Open SQLite file** button in the browser.
 
+For pagination and sticky-grid smoke checks, you can also launch the richer demo fixture:
+
+```bash
+sqlite-browser demo/gps-course.sqlite
+```
+
 ## Development
+
+### Editable install
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+sqlite-browser demo/test.sqlite
+```
+
+If the repo `.venv` is already active and you've already run `pip install -e .[dev]`, you can launch the app directly with `sqlite-browser ...` and do not need `pipx`.
+
+From the repo root, the most direct local-development command is also:
+
+```bash
+.venv/bin/sqlite-browser demo/test.sqlite
+```
+
+### Windows PowerShell editable install
+```powershell
+py -3.13 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .[dev]
+sqlite-browser demo\test.sqlite
+```
 
 Run tests:
 ```bash
@@ -80,5 +154,17 @@ make check
 
 Create the local virtualenv and launch the app:
 ```bash
-make -f Makefile.run run
+make run
 ```
+
+Build an internal-use standalone app bundle with PyInstaller:
+```bash
+make package
+```
+
+Smoke-test the packaged artifact, including browser launch, templates, static assets, and API startup:
+```bash
+make package-smoke
+```
+
+The packaged app is created under `dist/sqlite-browser/` and uses `onedir` layout for macOS and Windows-friendly local distribution.

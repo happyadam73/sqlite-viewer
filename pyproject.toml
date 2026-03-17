@@ -22,6 +22,9 @@ dev = [
   "ruff>=0.6,<1.0",
   "mypy>=1.10,<2.0",
 ]
+packaging = [
+  "pyinstaller>=6.0,<7.0",
+]
 
 [project.scripts]
 sqlite-browser = "sqlite_browser.cli:main"
