@@ -61,8 +61,8 @@
 
     if (themeToggle instanceof HTMLButtonElement) {
       themeToggle.dataset.themeChoice = choice;
+      themeToggle.setAttribute("aria-checked", resolvedTheme === "dark" ? "true" : "false");
       themeToggle.setAttribute("aria-pressed", resolvedTheme === "dark" ? "true" : "false");
-      themeToggle.textContent = resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme";
       themeToggle.title =
         choice === "system"
           ? `Following system theme: ${resolvedTheme}`
@@ -399,7 +399,6 @@
     if (isExpanded) {
       state.expandedTables.delete(tableName);
       expandButton.setAttribute("aria-expanded", "false");
-      expandButton.textContent = "+";
       schemaList.hidden = true;
       return;
     }
@@ -421,7 +420,6 @@
     renderSchemaList(schemaList, state.schemaCache.get(tableName) ?? []);
     state.expandedTables.add(tableName);
     expandButton.setAttribute("aria-expanded", "true");
-    expandButton.textContent = "-";
     schemaList.hidden = false;
   }
 
@@ -558,7 +556,6 @@
       const expandButton = document.createElement("button");
       expandButton.className = "table-expand";
       expandButton.type = "button";
-      expandButton.textContent = "+";
       expandButton.dataset.tableName = table.name;
       expandButton.setAttribute("data-testid", `table-expand-${table.name}`);
       expandButton.setAttribute("aria-expanded", "false");

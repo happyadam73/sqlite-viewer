@@ -9,12 +9,15 @@
   <body>
     <div class="app-shell" data-testid="app-shell">
       <header class="top-bar">
-        <div class="brand-block">
-          <p class="eyebrow">Local SQLite Browser</p>
-          <h1>Inspect local databases without leaving the browser.</h1>
+        <div class="top-bar__identity">
+          <p class="top-bar__eyebrow">Local SQLite Browser</p>
+          <h1 class="top-bar__title">SQLite Browser</h1>
         </div>
         <div class="top-bar__controls">
-          <div class="db-label" data-testid="current-db-label">{{ current_db_label }}</div>
+          <div class="db-status">
+            <span class="db-status__label">Current database</span>
+            <div class="db-label" data-testid="current-db-label">{{ current_db_label }}</div>
+          </div>
           <button
             class="primary-button"
             data-action="open-file"
@@ -23,8 +26,18 @@
           >
             Open SQLite file
           </button>
-          <button class="secondary-button" data-testid="theme-toggle" type="button">
-            Toggle theme
+          <button
+            class="theme-switch"
+            data-testid="theme-toggle"
+            type="button"
+            role="switch"
+            aria-checked="false"
+            aria-label="Toggle dark theme"
+          >
+            <span class="theme-switch__text">Theme</span>
+            <span class="theme-switch__track" aria-hidden="true">
+              <span class="theme-switch__thumb"></span>
+            </span>
           </button>
         </div>
         <input
