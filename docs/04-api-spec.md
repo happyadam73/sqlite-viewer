@@ -61,8 +61,8 @@ Example response:
 }
 ```
 
-## `GET /api/tables/{table_name}/rows?limit=500&offset=0`
-Returns table preview rows.
+## `GET /api/tables/{table_name}/rows?page=1&page_size=100`
+Returns paginated table preview rows.
 
 Example response:
 ```json
@@ -73,8 +73,12 @@ Example response:
     [1, "Start here", "generic", "2024-08-16T00:00:00"],
     [2, "300ft:Turn", "left", "2024-08-16T00:00:00"]
   ],
-  "limit": 500,
-  "offset": 0
+  "page": 1,
+  "page_size": 100,
+  "total_rows": 602,
+  "total_pages": 7,
+  "has_previous": false,
+  "has_next": true
 }
 ```
 
@@ -119,11 +123,14 @@ Use a consistent error shape:
 Must be validated against actual discovered tables before use.
 Do not trust arbitrary path parameters as safe SQL identifiers.
 
-### Limits
-Apply sensible caps to row limit requests to prevent abuse or accidental overload.
+### Pagination
+- `page` and `page_size` must be positive integers
+- apply sensible caps to page size requests to prevent abuse or accidental overload
+- page size options exposed in the UI should map to supported backend values
 
 ## 5. Behavioural rules
 
 - if no DB is loaded, APIs that require a DB should return a clear error
 - if an invalid table is requested, return a 404 or equivalent application error
 - if upload fails, preserve prior good state where practical
+- row responses must include enough pagination metadata for the standard pagination controls to render deterministically

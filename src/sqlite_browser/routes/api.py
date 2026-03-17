@@ -8,8 +8,8 @@ from fastapi import APIRouter, File, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from sqlite_browser.db import (
-    DEFAULT_PREVIEW_LIMIT,
-    MAX_PREVIEW_LIMIT,
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
     DatabaseError,
     DatabaseNotLoadedError,
     get_table_rows,
@@ -57,12 +57,12 @@ def table_schema(request: Request, table_name: str) -> TableSchemaResponse | JSO
 def table_rows(
     request: Request,
     table_name: str,
-    limit: int = Query(DEFAULT_PREVIEW_LIMIT, ge=1, le=MAX_PREVIEW_LIMIT),
-    offset: int = Query(0, ge=0),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ) -> TableRowsResponse | JSONResponse:
     try:
         db_path = _get_active_db_path(request)
-        return get_table_rows(db_path, table_name, limit=limit, offset=offset)
+        return get_table_rows(db_path, table_name, page=page, page_size=page_size)
     except DatabaseError as exc:
         return _error_response(exc)
 

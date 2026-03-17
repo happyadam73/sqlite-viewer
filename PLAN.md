@@ -42,18 +42,21 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 
 ## Milestone 5 - UX Polish And Theming
 
-- [ ] Implement the draggable horizontal splitter with minimum pane widths and stable behaviour in both themes.
-- [ ] Add independent scrolling for the explorer pane and data pane, including wide-table horizontal overflow.
-- [ ] Implement dark and light themes, follow system preference on first load if practical, and persist manual choice locally.
-- [ ] Improve selected-table styling, sticky or otherwise readable grid headers, and prominent error-banner presentation.
-- [ ] Keep key interactions automation-friendly by avoiding flaky timing dependencies and heavy animations.
-- [ ] Verify the primary browsing workflow remains stable across empty, loading, success, and error states.
+- [x] Implement the draggable horizontal splitter with minimum pane widths and stable behaviour in both themes.
+- [x] Add independent scrolling for the explorer pane and data pane, including wide-table horizontal overflow.
+- [x] Extend the rows API and frontend state to support paginated table previews with bounded page-size options and deterministic pagination metadata.
+- [x] Keep grid column headers visible during vertical scrolling and keep the first column visible during horizontal scrolling.
+- [x] Add standard pagination controls with previous/next navigation and a page-size selector when the selected table exceeds the active page size.
+- [x] Implement dark and light themes, follow system preference on first load if practical, and persist manual choice locally.
+- [x] Improve selected-table styling and prominent error-banner presentation without regressing the sticky grid and pagination behaviour.
+- [x] Keep key interactions automation-friendly by avoiding flaky timing dependencies and heavy animations.
+- [x] Verify the primary browsing workflow remains stable across empty, loading, success, error, tall-table, wide-table, and paginated-table states.
 
 ## Milestone 6 - Tests, Demo Data, And Release Readiness
 
 - [ ] Add a representative `demo/test.sqlite` fixture and any supporting demo notes needed for smoke testing.
-- [ ] Add pytest unit coverage for DB validation, table discovery, schema extraction, row preview, and invalid-table handling.
-- [ ] Add pytest API coverage for startup modes, status, tables, schema, rows, upload, and no-DB error cases.
+- [ ] Add pytest unit coverage for DB validation, table discovery, schema extraction, paginated row preview logic, and invalid-table handling.
+- [ ] Add pytest API coverage for startup modes, status, tables, schema, paginated rows, upload, and no-DB error cases.
 - [ ] Ensure the UI exposes the required `data-testid` selectors for Playwright-driven scenarios.
 - [ ] Run and fix `pytest`, `ruff check .`, and `mypy src` for the implemented codebase.
-- [ ] Perform the manual smoke path and the required Playwright scenarios for empty startup, upload, schema expand, row browsing, theme toggle, splitter drag, and invalid upload.
+- [ ] Perform the manual smoke path and the required Playwright scenarios for empty startup, upload, schema expand, sticky-header row browsing, pagination/page-size controls, theme toggle, splitter drag, and invalid upload.

@@ -21,6 +21,11 @@ def test_root_page_renders_empty_shell() -> None:
     assert 'data-testid="data-grid"' in response.text
     assert 'data-testid="data-grid-header"' in response.text
     assert 'data-testid="data-grid-body"' in response.text
+    assert 'data-testid="pagination-controls"' in response.text
+    assert 'data-testid="pagination-prev-button"' in response.text
+    assert 'data-testid="pagination-next-button"' in response.text
+    assert 'data-testid="pagination-page-size"' in response.text
+    assert 'data-testid="pagination-page-label"' in response.text
     assert 'data-testid="empty-state"' in response.text
     assert 'data-testid="error-banner"' in response.text
     assert 'data-testid="loading-indicator"' in response.text

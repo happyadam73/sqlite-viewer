@@ -79,7 +79,7 @@ A user runs a CLI tool that produces a SQLite file and wants to inspect the resu
 A user starts the browser app locally and selects a DB file using the file picker.
 
 ### Use case C — verify schemas and sample data
-A user expands tables to inspect columns and then clicks a table to preview its rows.
+A user expands tables to inspect columns, clicks a table to preview its rows, and pages through larger result sets without losing header or first-column context.
 
 ## 8. Functional requirements
 
@@ -152,9 +152,14 @@ The right pane must:
 - display column headers
 - support horizontal scrolling
 - support vertical scrolling
+- keep column headers visible while vertically scrolling the row grid
+- keep the first visible data column pinned while horizontally scrolling wide tables
+- provide standard pagination controls when the current page size limit is reached
+- provide a page size control as part of the pagination controls
 - remain stable for wide tables and long values
 
-For v1, the table preview may be limited to a default row count such as 500.
+For v1, the table preview may enforce a safe maximum page size such as 500.
+When a table contains more rows than fit in the active page size, the UI must allow paging forward and backward through the preview data.
 
 ### 8.5 Theme support
 
@@ -221,7 +226,7 @@ The product is successful when a user can:
 - start it locally in a fresh `.venv`
 - load a DB by path or by file picker
 - browse tables and schema
-- preview rows in a scrollable grid
+- preview rows in a scrollable, paginated grid without losing headers or first-column context
 - resize the layout
 - switch theme
 - run reliable automated UI tests through Playwright MCP
@@ -233,7 +238,7 @@ The project is done when:
 - the app supports both startup modes
 - the file picker works
 - tables and schema load correctly
-- rows display correctly
+- rows display correctly with sticky headers, a sticky first column, and pagination when needed
 - panes are resizable and scroll independently
 - dark/light themes work
 - invalid file handling is clear and stable

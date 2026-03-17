@@ -23,7 +23,8 @@ Responsibilities:
 - open database in read-only mode where practical
 - enumerate tables
 - fetch schema metadata
-- fetch row previews
+- fetch paginated row previews
+- return pagination metadata for the selected table preview
 - expose API endpoints used by the UI
 
 ### Frontend
@@ -32,8 +33,10 @@ Responsibilities:
 - handle file picker interactions
 - request and render tables/schema/rows
 - manage selected table state
+- manage current page and page-size state for row previews
 - manage theme toggle
 - manage splitter drag behaviour
+- keep grid headers and the first data column visible during scrolling
 - display loading, empty, and error states
 
 ### Session store
@@ -67,6 +70,7 @@ Examples of access patterns:
 - discover tables from `sqlite_master`
 - retrieve columns from `PRAGMA table_info`
 - retrieve rows using `SELECT * ... LIMIT ... OFFSET ...`
+- count rows when needed to drive pagination metadata for the preview UI
 
 ## 5. Data model concepts
 
@@ -90,7 +94,10 @@ Minimal response models:
 ### Row preview
 - column names
 - array of row objects or arrays
-- row limit metadata
+- current page metadata
+- active page size
+- total row count and total page count when pagination is available
+- previous/next availability flags
 
 ## 6. Backend module responsibilities
 
@@ -106,7 +113,8 @@ All SQLite-specific logic:
 - open DB connection
 - discover tables
 - fetch schema
-- fetch rows
+- fetch paginated rows
+- compute preview pagination metadata
 
 ### `session_store.py`
 Track current active DB and temp upload lifecycle

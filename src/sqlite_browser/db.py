@@ -3,13 +3,14 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
+from math import ceil
 from pathlib import Path
 
 from sqlite_browser.models import SchemaColumn, TableRowsResponse, TableSchemaResponse, TableSummary
 
 SUPPORTED_EXTENSIONS = frozenset({".sqlite", ".sqlite3", ".db"})
-DEFAULT_PREVIEW_LIMIT = 500
-MAX_PREVIEW_LIMIT = 1000
+DEFAULT_PAGE_SIZE = 100
+MAX_PAGE_SIZE = 500
 
 
 class DatabaseError(Exception):
@@ -135,17 +136,24 @@ def get_table_rows(
     db_path: Path,
     table_name: str,
     *,
-    limit: int = DEFAULT_PREVIEW_LIMIT,
-    offset: int = 0,
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
 ) -> TableRowsResponse:
-    preview_limit = min(limit, MAX_PREVIEW_LIMIT)
+    bounded_page_size = min(page_size, MAX_PAGE_SIZE)
+    requested_page = max(page, 1)
 
     try:
         with connect_readonly(db_path) as connection:
             quoted_table_name = _require_known_table(connection, table_name)
+            total_rows = connection.execute(
+                f"SELECT COUNT(*) FROM {quoted_table_name}"
+            ).fetchone()[0]
+            total_pages = max(1, ceil(total_rows / bounded_page_size)) if bounded_page_size else 1
+            current_page = min(requested_page, total_pages)
+            offset = (current_page - 1) * bounded_page_size
             cursor = connection.execute(
                 f"SELECT * FROM {quoted_table_name} LIMIT ? OFFSET ?",
-                (preview_limit, offset),
+                (bounded_page_size, offset),
             )
             rows = cursor.fetchall()
             columns = [description[0] for description in cursor.description or []]
@@ -158,8 +166,12 @@ def get_table_rows(
         table_name=table_name,
         columns=columns,
         rows=[[_normalize_value(value) for value in row] for row in rows],
-        limit=preview_limit,
-        offset=offset,
+        page=current_page,
+        page_size=bounded_page_size,
+        total_rows=total_rows,
+        total_pages=total_pages,
+        has_previous=current_page > 1,
+        has_next=current_page < total_pages,
     )
 
 

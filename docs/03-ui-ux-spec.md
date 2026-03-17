@@ -41,9 +41,14 @@ The data pane must:
 - optionally show small metadata summary
 - show grid with column headers and rows
 - support both horizontal and vertical scroll
+- keep the header row visible while the grid body scrolls vertically
+- keep the first column visible while the grid scrolls horizontally
+- show standard pagination controls when more rows exist than fit in the active page size
+- include a page size selector in the pagination controls
 
 Recommended behaviour:
-- sticky headers if straightforward
+- pagination controls should include previous/next actions and a clear current-page indicator
+- sticky positioning for the header row and first column should avoid obscuring cell content
 - monospace option not required
 - long text truncated visually but inspectable via tooltip or full cell if easy
 
@@ -113,6 +118,11 @@ Key controls must have:
 - `data-grid`
 - `data-grid-header`
 - `data-grid-body`
+- `pagination-controls`
+- `pagination-prev-button`
+- `pagination-next-button`
+- `pagination-page-size`
+- `pagination-page-label`
 
 ### States
 - `empty-state`
@@ -134,3 +144,4 @@ The UI should prefer:
 - stable test IDs
 - explicit loading indicators
 - consistent selected state classes
+- stable scroll containers for the explorer and data grid

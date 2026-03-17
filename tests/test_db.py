@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from sqlite_browser.db import (
+    MAX_PAGE_SIZE,
     TableNotFoundError,
     get_table_rows,
     get_table_schema,
@@ -54,16 +55,36 @@ def test_get_table_schema_returns_column_metadata(sample_db: Path) -> None:
 
 
 def test_get_table_rows_returns_preview_rows(sample_db: Path) -> None:
-    preview = get_table_rows(sample_db, "records", limit=2, offset=1)
+    preview = get_table_rows(sample_db, "records", page=2, page_size=2)
 
     assert preview.table_name == "records"
     assert preview.columns == ["id", "name", "score", "notes", "payload"]
-    assert preview.rows == [
-        [2, "Ben", 88.0, "steady", "42454e"],
-        [3, "Cy", 77.25, None, "4359"],
-    ]
-    assert preview.limit == 2
-    assert preview.offset == 1
+    assert preview.rows == [[3, "Cy", 77.25, None, "4359"]]
+    assert preview.page == 2
+    assert preview.page_size == 2
+    assert preview.total_rows == 3
+    assert preview.total_pages == 2
+    assert preview.has_previous is True
+    assert preview.has_next is False
+
+
+def test_get_table_rows_caps_requested_page_size(sample_db: Path) -> None:
+    preview = get_table_rows(sample_db, "records", page=1, page_size=MAX_PAGE_SIZE + 100)
+
+    assert preview.page == 1
+    assert preview.page_size == MAX_PAGE_SIZE
+    assert preview.total_rows == 3
+    assert preview.total_pages == 1
+    assert preview.has_previous is False
+    assert preview.has_next is False
+
+
+def test_get_table_rows_clamps_requested_page_to_last_page(sample_db: Path) -> None:
+    preview = get_table_rows(sample_db, "records", page=9, page_size=2)
+
+    assert preview.page == 2
+    assert preview.page_size == 2
+    assert preview.rows == [[3, "Cy", 77.25, None, "4359"]]
 
 
 def test_get_table_schema_rejects_unknown_table(sample_db: Path) -> None:

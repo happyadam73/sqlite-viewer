@@ -1,5 +1,10 @@
 (() => {
+  const DEFAULT_PAGE_SIZE = 100;
+  const MIN_EXPLORER_WIDTH = 288;
+  const MIN_DATA_WIDTH = 360;
+  const SPLITTER_KEYBOARD_STEP = 24;
   const root = document.documentElement;
+  const workspace = document.querySelector('[data-role="workspace"]');
   const themeToggle = document.querySelector('[data-testid="theme-toggle"]');
   const currentDbLabel = document.querySelector('[data-testid="current-db-label"]');
   const loadingIndicator = document.querySelector('[data-testid="loading-indicator"]');
@@ -16,27 +21,52 @@
   const dataGrid = document.querySelector('[data-testid="data-grid"]');
   const dataGridHeader = document.querySelector('[data-testid="data-grid-header"]');
   const dataGridBody = document.querySelector('[data-testid="data-grid-body"]');
+  const paneSplitter = document.querySelector('[data-testid="pane-splitter"]');
+  const paginationControls = document.querySelector('[data-testid="pagination-controls"]');
+  const paginationPageLabel = document.querySelector('[data-testid="pagination-page-label"]');
+  const paginationPageSize = document.querySelector('[data-testid="pagination-page-size"]');
+  const paginationPrevButton = document.querySelector('[data-testid="pagination-prev-button"]');
+  const paginationNextButton = document.querySelector('[data-testid="pagination-next-button"]');
   const fileInput = document.getElementById("db-file-input");
   const openFileButtons = document.querySelectorAll('[data-action="open-file"]');
-  const storageKey = "sqlite-browser-theme";
+  const themeStorageKey = "sqlite-browser-theme";
+  const themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   const state = {
+    activePointerId: null,
     expandedTables: new Set(),
     loadingCount: 0,
+    previewPage: 1,
+    previewPageSize: DEFAULT_PAGE_SIZE,
     rowRequestToken: 0,
     schemaCache: new Map(),
     selectedTableName: null,
     sourceMode: null,
     tableNames: [],
+    totalPages: 1,
+    totalRows: 0,
   };
 
+  function getResolvedTheme(choice) {
+    if (choice === "system") {
+      return themeMediaQuery.matches ? "dark" : "light";
+    }
+
+    return choice;
+  }
+
   function applyTheme(choice) {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolvedTheme = choice === "system" ? (prefersDark ? "dark" : "light") : choice;
+    const resolvedTheme = getResolvedTheme(choice);
     root.dataset.theme = resolvedTheme;
+    root.dataset.themeChoice = choice;
+
     if (themeToggle instanceof HTMLButtonElement) {
       themeToggle.dataset.themeChoice = choice;
       themeToggle.setAttribute("aria-pressed", resolvedTheme === "dark" ? "true" : "false");
       themeToggle.textContent = resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme";
+      themeToggle.title =
+        choice === "system"
+          ? `Following system theme: ${resolvedTheme}`
+          : `Theme locked to ${resolvedTheme}`;
     }
   }
 
@@ -118,10 +148,14 @@
     }
   }
 
-  async function loadRows(tableName) {
+  async function loadRows(tableName, { page = 1, pageSize = state.previewPageSize } = {}) {
     beginLoading(`Loading preview rows for ${tableName}...`);
     try {
-      return await requestJson(`/api/tables/${encodeURIComponent(tableName)}/rows`);
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(pageSize),
+      });
+      return await requestJson(`/api/tables/${encodeURIComponent(tableName)}/rows?${params.toString()}`);
     } finally {
       endLoading();
     }
@@ -197,9 +231,71 @@
     }
   }
 
+  function setPageSizeControl(pageSize) {
+    if (paginationPageSize instanceof HTMLSelectElement) {
+      paginationPageSize.value = String(pageSize);
+    }
+  }
+
+  function hidePaginationControls() {
+    state.previewPage = 1;
+    state.totalPages = 1;
+    state.totalRows = 0;
+    setPageSizeControl(state.previewPageSize);
+
+    if (paginationControls instanceof HTMLElement) {
+      paginationControls.hidden = true;
+    }
+    if (paginationPageLabel instanceof HTMLElement) {
+      paginationPageLabel.textContent = "Page 1 of 1";
+    }
+    if (paginationPrevButton instanceof HTMLButtonElement) {
+      paginationPrevButton.disabled = true;
+    }
+    if (paginationNextButton instanceof HTMLButtonElement) {
+      paginationNextButton.disabled = true;
+    }
+  }
+
+  function updatePaginationControls(payload) {
+    state.previewPage = payload.page;
+    state.previewPageSize = payload.page_size;
+    state.totalRows = payload.total_rows;
+    state.totalPages = payload.total_pages;
+    setPageSizeControl(payload.page_size);
+
+    if (paginationPageLabel instanceof HTMLElement) {
+      paginationPageLabel.textContent = `Page ${payload.page} of ${payload.total_pages}`;
+    }
+    if (paginationPrevButton instanceof HTMLButtonElement) {
+      paginationPrevButton.disabled = !payload.has_previous;
+    }
+    if (paginationNextButton instanceof HTMLButtonElement) {
+      paginationNextButton.disabled = !payload.has_next;
+    }
+    if (paginationControls instanceof HTMLElement) {
+      paginationControls.hidden = payload.total_rows <= payload.page_size;
+    }
+  }
+
+  function resetGridScroll({ resetHorizontal = true, resetVertical = true } = {}) {
+    if (!(dataGrid instanceof HTMLElement)) {
+      return;
+    }
+
+    if (resetHorizontal) {
+      dataGrid.scrollLeft = 0;
+    }
+    if (resetVertical) {
+      dataGrid.scrollTop = 0;
+    }
+  }
+
   function resetPreviewState() {
     state.rowRequestToken += 1;
     state.selectedTableName = null;
+    state.previewPage = 1;
+    state.previewPageSize = DEFAULT_PAGE_SIZE;
     updateSelectedTableStyles();
 
     if (selectedTableTitle instanceof HTMLElement) {
@@ -207,6 +303,7 @@
     }
 
     setSelectedTableMeta("");
+    hidePaginationControls();
     renderGridPlaceholder("Column headers will appear here.", "Row previews will appear here after a table is selected.");
   }
 
@@ -217,9 +314,10 @@
     resetPreviewState();
   }
 
-  function createGridCell(text, className = "") {
+  function createGridCell(text, classes = []) {
     const cell = document.createElement("div");
-    cell.className = className ? `grid-cell ${className}` : "grid-cell";
+    const classNames = ["grid-cell", ...classes].filter(Boolean);
+    cell.className = classNames.join(" ");
     cell.textContent = text;
     cell.title = text;
     return cell;
@@ -231,19 +329,16 @@
     }
 
     const headerRow = document.createElement("div");
-    headerRow.className = "grid-row";
-    headerRow.appendChild(createGridCell(headerText, "grid-cell--placeholder"));
+    headerRow.className = "grid-row grid-row--header";
+    headerRow.appendChild(createGridCell(headerText, ["grid-cell--placeholder", "grid-cell--first-column"]));
 
     const bodyRow = document.createElement("div");
     bodyRow.className = "grid-row";
-    bodyRow.appendChild(createGridCell(bodyText, "grid-cell--placeholder"));
+    bodyRow.appendChild(createGridCell(bodyText, ["grid-cell--placeholder", "grid-cell--first-column"]));
 
     dataGridHeader.replaceChildren(headerRow);
     dataGridBody.replaceChildren(bodyRow);
-    if (dataGrid instanceof HTMLElement) {
-      dataGrid.scrollLeft = 0;
-      dataGrid.scrollTop = 0;
-    }
+    resetGridScroll();
   }
 
   function createSchemaBadge(text) {
@@ -330,7 +425,17 @@
     schemaList.hidden = false;
   }
 
-  function renderRows(tableName, payload) {
+  function buildRowsSummary(payload) {
+    if (payload.total_rows === 0) {
+      return "No rows found in this table.";
+    }
+
+    const startRow = (payload.page - 1) * payload.page_size + 1;
+    const endRow = startRow + payload.rows.length - 1;
+    return `Showing rows ${startRow}-${endRow} of ${payload.total_rows}. Page ${payload.page} of ${payload.total_pages}.`;
+  }
+
+  function renderRows(tableName, payload, { resetHorizontalScroll = true } = {}) {
     if (
       !(selectedTableTitle instanceof HTMLElement) ||
       !(dataGridHeader instanceof HTMLElement) ||
@@ -340,9 +445,13 @@
     }
 
     const headerRow = document.createElement("div");
-    headerRow.className = "grid-row";
-    payload.columns.forEach((columnName) => {
-      headerRow.appendChild(createGridCell(columnName, "grid-cell--header"));
+    headerRow.className = "grid-row grid-row--header";
+    payload.columns.forEach((columnName, columnIndex) => {
+      const classes = ["grid-cell--header"];
+      if (columnIndex === 0) {
+        classes.push("grid-cell--first-column");
+      }
+      headerRow.appendChild(createGridCell(columnName, classes));
     });
 
     const bodyRows = payload.rows.length
@@ -350,10 +459,15 @@
           const rowElement = document.createElement("div");
           rowElement.className = "grid-row";
 
-          row.forEach((value) => {
-            const text = value === null ? "NULL" : String(value);
-            const cell = createGridCell(text, value === null ? "grid-cell--null" : "");
-            rowElement.appendChild(cell);
+          row.forEach((value, columnIndex) => {
+            const classes = [];
+            if (value === null) {
+              classes.push("grid-cell--null");
+            }
+            if (columnIndex === 0) {
+              classes.push("grid-cell--first-column");
+            }
+            rowElement.appendChild(createGridCell(value === null ? "NULL" : String(value), classes));
           });
 
           return rowElement;
@@ -361,27 +475,40 @@
       : (() => {
           const emptyRow = document.createElement("div");
           emptyRow.className = "grid-row";
-          emptyRow.appendChild(createGridCell("No preview rows found for this table.", "grid-cell--placeholder"));
+          emptyRow.appendChild(
+            createGridCell("No preview rows found for this table.", [
+              "grid-cell--placeholder",
+              "grid-cell--first-column",
+            ])
+          );
           return [emptyRow];
         })();
 
     selectedTableTitle.textContent = tableName;
-    setSelectedTableMeta(`Showing ${payload.rows.length} row(s) from the first ${payload.limit} preview results.`);
+    setSelectedTableMeta(buildRowsSummary(payload));
     hideEmptyState();
+    updatePaginationControls(payload);
     dataGridHeader.replaceChildren(headerRow);
     dataGridBody.replaceChildren(...bodyRows);
-    if (dataGrid instanceof HTMLElement) {
-      dataGrid.scrollLeft = 0;
-      dataGrid.scrollTop = 0;
-    }
+    resetGridScroll({ resetHorizontal: resetHorizontalScroll, resetVertical: true });
   }
 
-  async function selectTable(tableName) {
+  async function selectTable(
+    tableName,
+    {
+      page = 1,
+      pageSize = state.previewPageSize,
+      resetHorizontalScroll = true,
+    } = {}
+  ) {
     clearBanner();
     state.selectedTableName = tableName;
+    state.previewPage = page;
+    state.previewPageSize = pageSize;
     state.rowRequestToken += 1;
     const requestToken = state.rowRequestToken;
     updateSelectedTableStyles();
+    setPageSizeControl(pageSize);
 
     if (selectedTableTitle instanceof HTMLElement) {
       selectedTableTitle.textContent = tableName;
@@ -391,16 +518,17 @@
     renderGridPlaceholder("Loading columns...", "Loading preview rows...");
 
     try {
-      const payload = await loadRows(tableName);
+      const payload = await loadRows(tableName, { page, pageSize });
       if (requestToken !== state.rowRequestToken) {
         return;
       }
-      renderRows(tableName, payload);
+      renderRows(tableName, payload, { resetHorizontalScroll });
     } catch (error) {
       if (requestToken !== state.rowRequestToken) {
         return;
       }
       setSelectedTableMeta("");
+      hidePaginationControls();
       showBanner(error instanceof Error ? error.message : "The preview rows could not be loaded.");
       renderGridPlaceholder("Preview unavailable", "Try another table or reload the page.");
       showEmptyState({
@@ -453,7 +581,7 @@
       });
 
       selectButton.addEventListener("click", async () => {
-        await selectTable(table.name);
+        await selectTable(table.name, { page: 1, pageSize: state.previewPageSize });
       });
 
       row.append(expandButton, selectButton);
@@ -479,16 +607,92 @@
         showAction: false,
       });
       setSelectedTableMeta("");
+      hidePaginationControls();
       return;
     }
 
     setExplorerHint("Expand a table to inspect its schema, or select one to preview rows.");
-    await selectTable(tables[0].name);
+    await selectTable(tables[0].name, { page: 1, pageSize: state.previewPageSize });
+  }
+
+  function isSplitLayoutEnabled() {
+    return !window.matchMedia("(max-width: 960px)").matches;
+  }
+
+  function getWorkspaceMetrics() {
+    if (!(workspace instanceof HTMLElement) || !(paneSplitter instanceof HTMLElement)) {
+      return null;
+    }
+
+    const workspaceRect = workspace.getBoundingClientRect();
+    const splitterRect = paneSplitter.getBoundingClientRect();
+    return {
+      left: workspaceRect.left,
+      width: workspaceRect.width,
+      splitterWidth: splitterRect.width || 12,
+    };
+  }
+
+  function getCurrentExplorerWidth() {
+    const inlineWidth = parseFloat(root.style.getPropertyValue("--explorer-width"));
+    if (!Number.isNaN(inlineWidth) && inlineWidth > 0) {
+      return inlineWidth;
+    }
+
+    const computedWidth = parseFloat(getComputedStyle(root).getPropertyValue("--explorer-width"));
+    if (!Number.isNaN(computedWidth) && computedWidth > 0) {
+      return computedWidth;
+    }
+
+    return MIN_EXPLORER_WIDTH;
+  }
+
+  function applyExplorerWidth(rawWidth) {
+    const metrics = getWorkspaceMetrics();
+    if (metrics === null || !isSplitLayoutEnabled()) {
+      return;
+    }
+
+    const maxExplorerWidth = Math.max(
+      MIN_EXPLORER_WIDTH,
+      metrics.width - MIN_DATA_WIDTH - metrics.splitterWidth
+    );
+    const clampedWidth = Math.min(Math.max(rawWidth, MIN_EXPLORER_WIDTH), maxExplorerWidth);
+    root.style.setProperty("--explorer-width", `${clampedWidth}px`);
+
+    if (paneSplitter instanceof HTMLElement) {
+      paneSplitter.setAttribute("aria-valuemin", String(MIN_EXPLORER_WIDTH));
+      paneSplitter.setAttribute("aria-valuemax", String(Math.round(maxExplorerWidth)));
+      paneSplitter.setAttribute("aria-valuenow", String(Math.round(clampedWidth)));
+    }
+  }
+
+  function resizeExplorerFromPointer(clientX) {
+    const metrics = getWorkspaceMetrics();
+    if (metrics === null) {
+      return;
+    }
+
+    applyExplorerWidth(clientX - metrics.left);
+  }
+
+  function stopSplitterDrag(pointerId) {
+    if (!(paneSplitter instanceof HTMLElement)) {
+      return;
+    }
+
+    if (pointerId !== null && paneSplitter.hasPointerCapture(pointerId)) {
+      paneSplitter.releasePointerCapture(pointerId);
+    }
+
+    state.activePointerId = null;
+    document.body.classList.remove("is-resizing");
   }
 
   async function initializeBrowser() {
     clearBanner();
     resetDatabaseState();
+    applyExplorerWidth(getCurrentExplorerWidth());
 
     try {
       const status = await loadStatus();
@@ -505,6 +709,7 @@
           showAction: true,
         });
         setSelectedTableMeta("");
+        hidePaginationControls();
         return;
       }
 
@@ -518,6 +723,7 @@
       renderTableList([]);
       setExplorerHint("The explorer could not be loaded.");
       setSelectedTableMeta("");
+      hidePaginationControls();
       showBanner(error instanceof Error ? error.message : "The application could not finish loading.");
       showEmptyState({
         eyebrow: "Backend Error",
@@ -528,13 +734,28 @@
     }
   }
 
-  const savedTheme = window.localStorage.getItem(storageKey) ?? "system";
+  const savedTheme = window.localStorage.getItem(themeStorageKey) ?? "system";
   applyTheme(savedTheme);
+
+  if (typeof themeMediaQuery.addEventListener === "function") {
+    themeMediaQuery.addEventListener("change", () => {
+      if ((themeToggle?.dataset.themeChoice ?? "system") === "system") {
+        applyTheme("system");
+      }
+    });
+  }
 
   themeToggle?.addEventListener("click", () => {
     const currentChoice = themeToggle.dataset.themeChoice ?? "system";
-    const nextChoice = currentChoice === "dark" ? "light" : "dark";
-    window.localStorage.setItem(storageKey, nextChoice);
+    const nextChoice =
+      currentChoice === "system"
+        ? getResolvedTheme("system") === "dark"
+          ? "light"
+          : "dark"
+        : currentChoice === "dark"
+          ? "light"
+          : "dark";
+    window.localStorage.setItem(themeStorageKey, nextChoice);
     applyTheme(nextChoice);
   });
 
@@ -567,6 +788,113 @@
     } catch (error) {
       showBanner(error instanceof Error ? error.message : "The selected file could not be opened.");
     }
+  });
+
+  paginationPrevButton?.addEventListener("click", async () => {
+    if (state.selectedTableName === null || state.previewPage <= 1) {
+      return;
+    }
+
+    await selectTable(state.selectedTableName, {
+      page: state.previewPage - 1,
+      pageSize: state.previewPageSize,
+      resetHorizontalScroll: false,
+    });
+  });
+
+  paginationNextButton?.addEventListener("click", async () => {
+    if (state.selectedTableName === null || state.previewPage >= state.totalPages) {
+      return;
+    }
+
+    await selectTable(state.selectedTableName, {
+      page: state.previewPage + 1,
+      pageSize: state.previewPageSize,
+      resetHorizontalScroll: false,
+    });
+  });
+
+  paginationPageSize?.addEventListener("change", async () => {
+    if (!(paginationPageSize instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    const nextPageSize = Number.parseInt(paginationPageSize.value, 10);
+    if (Number.isNaN(nextPageSize) || nextPageSize <= 0) {
+      paginationPageSize.value = String(state.previewPageSize);
+      return;
+    }
+
+    state.previewPageSize = nextPageSize;
+
+    if (state.selectedTableName === null) {
+      return;
+    }
+
+    await selectTable(state.selectedTableName, {
+      page: 1,
+      pageSize: nextPageSize,
+      resetHorizontalScroll: false,
+    });
+  });
+
+  paneSplitter?.addEventListener("pointerdown", (event) => {
+    if (!isSplitLayoutEnabled()) {
+      return;
+    }
+
+    event.preventDefault();
+    state.activePointerId = event.pointerId;
+    paneSplitter.setPointerCapture(event.pointerId);
+    document.body.classList.add("is-resizing");
+    resizeExplorerFromPointer(event.clientX);
+  });
+
+  window.addEventListener("pointermove", (event) => {
+    if (state.activePointerId !== event.pointerId) {
+      return;
+    }
+
+    resizeExplorerFromPointer(event.clientX);
+  });
+
+  window.addEventListener("pointerup", (event) => {
+    if (state.activePointerId !== event.pointerId) {
+      return;
+    }
+
+    stopSplitterDrag(event.pointerId);
+  });
+
+  window.addEventListener("pointercancel", (event) => {
+    if (state.activePointerId !== event.pointerId) {
+      return;
+    }
+
+    stopSplitterDrag(event.pointerId);
+  });
+
+  paneSplitter?.addEventListener("keydown", (event) => {
+    if (!isSplitLayoutEnabled()) {
+      return;
+    }
+
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowLeft" ? -1 : 1;
+    applyExplorerWidth(getCurrentExplorerWidth() + direction * SPLITTER_KEYBOARD_STEP);
+  });
+
+  window.addEventListener("resize", () => {
+    if (!isSplitLayoutEnabled()) {
+      stopSplitterDrag(state.activePointerId);
+      return;
+    }
+
+    applyExplorerWidth(getCurrentExplorerWidth());
   });
 
   void initializeBrowser();

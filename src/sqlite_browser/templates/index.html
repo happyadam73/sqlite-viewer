@@ -40,7 +40,7 @@
         <div data-testid="error-banner" hidden role="alert"></div>
       </div>
 
-      <main class="workspace">
+      <main class="workspace" data-role="workspace">
         <section class="pane pane--explorer" data-testid="explorer-pane">
           <div class="pane__header">
             <p class="pane__eyebrow">Explorer</p>
@@ -54,7 +54,14 @@
           </div>
         </section>
 
-        <div class="pane-splitter" data-testid="pane-splitter" aria-hidden="true"></div>
+        <div
+          class="pane-splitter"
+          data-testid="pane-splitter"
+          aria-label="Resize explorer and data panes"
+          aria-orientation="vertical"
+          role="separator"
+          tabindex="0"
+        ></div>
 
         <section class="pane pane--data" data-testid="data-pane">
           <div class="pane__header">
@@ -94,6 +101,36 @@
                   Row previews will appear here after a table is selected.
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section class="pagination-controls" data-testid="pagination-controls" hidden aria-label="Pagination controls">
+            <p class="pagination-controls__label" data-testid="pagination-page-label">Page 1 of 1</p>
+            <div class="pagination-controls__actions">
+              <label class="pagination-controls__size">
+                Rows per page
+                <select data-testid="pagination-page-size" aria-label="Rows per page">
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100" selected>100</option>
+                  <option value="250">250</option>
+                  <option value="500">500</option>
+                </select>
+              </label>
+              <button
+                class="secondary-button pagination-controls__button"
+                data-testid="pagination-prev-button"
+                type="button"
+              >
+                Previous
+              </button>
+              <button
+                class="secondary-button pagination-controls__button"
+                data-testid="pagination-next-button"
+                type="button"
+              >
+                Next
+              </button>
             </div>
           </section>
         </section>

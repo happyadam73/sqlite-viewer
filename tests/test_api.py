@@ -105,17 +105,18 @@ def test_milestone_two_api_happy_path(sample_db: Path) -> None:
         ],
     }
 
-    rows_response = client.get("/api/tables/records/rows", params={"limit": 2, "offset": 1})
+    rows_response = client.get("/api/tables/records/rows", params={"page": 2, "page_size": 2})
     assert rows_response.status_code == 200
     assert rows_response.json() == {
         "table_name": "records",
         "columns": ["id", "name", "score", "notes", "payload"],
-        "rows": [
-            [2, "Ben", 88.0, "steady", "42454e"],
-            [3, "Cy", 77.25, None, "4359"],
-        ],
-        "limit": 2,
-        "offset": 1,
+        "rows": [[3, "Cy", 77.25, None, "4359"]],
+        "page": 2,
+        "page_size": 2,
+        "total_rows": 3,
+        "total_pages": 2,
+        "has_previous": True,
+        "has_next": False,
     }
 
 
@@ -145,6 +146,14 @@ def test_invalid_table_rows_returns_404(sample_db: Path) -> None:
             "message": 'The table "missing_table" was not found in the active database.',
         }
     }
+
+
+def test_rows_endpoint_rejects_invalid_pagination_values(sample_db: Path) -> None:
+    client = TestClient(create_app(config=AppConfig(db_path=sample_db, db_label="demo/test.sqlite")))
+
+    response = client.get("/api/tables/records/rows", params={"page": 0, "page_size": 0})
+
+    assert response.status_code == 422
 
 
 def test_open_upload_loads_database_and_updates_session(sample_db: Path) -> None:

@@ -46,8 +46,12 @@ class TableRowsResponse(BaseModel):
     table_name: str
     columns: list[str]
     rows: list[list[JsonScalar]]
-    limit: int
-    offset: int
+    page: int
+    page_size: int
+    total_rows: int
+    total_pages: int
+    has_previous: bool
+    has_next: bool
 
 
 class ApiErrorDetail(BaseModel):

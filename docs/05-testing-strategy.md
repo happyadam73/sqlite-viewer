@@ -17,6 +17,7 @@ Focus areas:
 - table discovery
 - schema extraction
 - row preview retrieval
+- row preview pagination metadata and page-size caps
 - handling of invalid DB files
 - handling of missing or invalid tables
 - identifier validation logic
@@ -32,7 +33,7 @@ Focus areas:
 - status endpoint
 - tables endpoint
 - schema endpoint
-- rows endpoint
+- rows endpoint pagination parameters and metadata
 - upload endpoint
 - invalid upload
 - no DB loaded errors
@@ -66,16 +67,24 @@ Required scenarios:
 - click a table
 - confirm title updates
 - confirm grid headers and rows visible
+- confirm the header row remains visible after vertical scrolling
+- confirm the first column remains visible after horizontal scrolling
 
-### Scenario 5 — theme toggle
+### Scenario 5 — paginate row previews
+- use a table with more rows than the default page size
+- confirm pagination controls appear
+- move to the next page and confirm rows update
+- change the page size and confirm the grid refreshes predictably
+
+### Scenario 6 — theme toggle
 - toggle theme
 - confirm DOM class or attribute changes
 
-### Scenario 6 — splitter drag
+### Scenario 7 — splitter drag
 - drag splitter
 - confirm pane size changes and app remains usable
 
-### Scenario 7 — invalid upload
+### Scenario 8 — invalid upload
 - upload invalid file
 - confirm error banner
 - confirm app remains stable
@@ -88,6 +97,7 @@ The implementation must include:
 - no flaky timing dependencies
 - minimal animation on critical controls
 - stable DOM structure
+- stable pagination controls and scroll containers
 
 ## 6. Demo test path
 
@@ -104,4 +114,4 @@ This is the default manual smoke path and should also be used for quick browser 
 Done means:
 - pytest passes locally
 - manual smoke test against demo DB passes
-- Playwright MCP can reliably drive the main user journey
+- Playwright MCP can reliably drive the main user journey, including scrolling and paginated row browsing
