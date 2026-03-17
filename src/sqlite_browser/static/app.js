@@ -25,6 +25,7 @@
     rowRequestToken: 0,
     schemaCache: new Map(),
     selectedTableName: null,
+    sourceMode: null,
     tableNames: [],
   };
 
@@ -126,6 +127,33 @@
     }
   }
 
+  async function uploadDatabase(file) {
+    beginLoading(`Opening ${file.name}...`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/open-upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      const isJson = response.headers.get("content-type")?.includes("application/json");
+      const payload = isJson ? await response.json() : null;
+
+      if (!response.ok) {
+        const message = payload?.error?.message ?? "The selected file could not be opened.";
+        throw new Error(message);
+      }
+
+      return payload;
+    } finally {
+      endLoading();
+    }
+  }
+
   function setExplorerHint(message) {
     if (explorerHint instanceof HTMLElement) {
       explorerHint.textContent = message;
@@ -167,6 +195,26 @@
     if (emptyState instanceof HTMLElement) {
       emptyState.hidden = true;
     }
+  }
+
+  function resetPreviewState() {
+    state.rowRequestToken += 1;
+    state.selectedTableName = null;
+    updateSelectedTableStyles();
+
+    if (selectedTableTitle instanceof HTMLElement) {
+      selectedTableTitle.textContent = "No table selected";
+    }
+
+    setSelectedTableMeta("");
+    renderGridPlaceholder("Column headers will appear here.", "Row previews will appear here after a table is selected.");
+  }
+
+  function resetDatabaseState() {
+    state.expandedTables.clear();
+    state.schemaCache.clear();
+    state.tableNames = [];
+    resetPreviewState();
   }
 
   function createGridCell(text, className = "") {
@@ -417,12 +465,34 @@
     updateSelectedTableStyles();
   }
 
+  async function renderLoadedDatabase({ dbLabel, sourceMode, tables }) {
+    state.sourceMode = sourceMode ?? null;
+    setCurrentDbLabel(dbLabel);
+    renderTableList(tables);
+
+    if (tables.length === 0) {
+      setExplorerHint("This database is loaded, but it does not expose any user tables.");
+      showEmptyState({
+        eyebrow: "Database Ready",
+        title: "No tables available",
+        copy: "This database loaded successfully, but there are no user tables available to preview.",
+        showAction: false,
+      });
+      setSelectedTableMeta("");
+      return;
+    }
+
+    setExplorerHint("Expand a table to inspect its schema, or select one to preview rows.");
+    await selectTable(tables[0].name);
+  }
+
   async function initializeBrowser() {
     clearBanner();
-    renderGridPlaceholder("Column headers will appear here.", "Row previews will appear here after a table is selected.");
+    resetDatabaseState();
 
     try {
       const status = await loadStatus();
+      state.sourceMode = status.source_mode ?? null;
       setCurrentDbLabel(status.db_label ?? "No database loaded");
 
       if (!status.db_loaded) {
@@ -431,7 +501,7 @@
         showEmptyState({
           eyebrow: "Start Here",
           title: "No database loaded yet",
-          copy: "Launch the app with a SQLite path, or use the browser file picker once upload support is connected.",
+          copy: "Launch the app with a SQLite path, or choose a local SQLite file to browse without restarting the app.",
           showAction: true,
         });
         setSelectedTableMeta("");
@@ -439,23 +509,11 @@
       }
 
       const tablesPayload = await loadTables();
-      const tables = tablesPayload.tables ?? [];
-      renderTableList(tables);
-
-      if (tables.length === 0) {
-        setExplorerHint("This database is loaded, but it does not expose any user tables.");
-        showEmptyState({
-          eyebrow: "Database Ready",
-          title: "No tables available",
-          copy: "This database loaded successfully, but there are no user tables available to preview.",
-          showAction: false,
-        });
-        setSelectedTableMeta("");
-        return;
-      }
-
-      setExplorerHint("Expand a table to inspect its schema, or select one to preview rows.");
-      await selectTable(tables[0].name);
+      await renderLoadedDatabase({
+        dbLabel: status.db_label ?? "No database loaded",
+        sourceMode: status.source_mode ?? null,
+        tables: tablesPayload.tables ?? [],
+      });
     } catch (error) {
       renderTableList([]);
       setExplorerHint("The explorer could not be loaded.");
@@ -486,10 +544,28 @@
     });
   });
 
-  fileInput?.addEventListener("change", () => {
-    if (fileInput.files?.length) {
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput?.files?.[0];
+    if (fileInput instanceof HTMLInputElement) {
       fileInput.value = "";
-      showBanner("Browser upload will be connected in a later milestone. The shell is ready for it.");
+    }
+
+    if (!(file instanceof File)) {
+      return;
+    }
+
+    clearBanner();
+
+    try {
+      const payload = await uploadDatabase(file);
+      resetDatabaseState();
+      await renderLoadedDatabase({
+        dbLabel: payload.db_label,
+        sourceMode: payload.source_mode,
+        tables: payload.tables ?? [],
+      });
+    } catch (error) {
+      showBanner(error instanceof Error ? error.message : "The selected file could not be opened.");
     }
   });
 

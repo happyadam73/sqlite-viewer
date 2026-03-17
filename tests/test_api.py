@@ -145,3 +145,82 @@ def test_invalid_table_rows_returns_404(sample_db: Path) -> None:
             "message": 'The table "missing_table" was not found in the active database.',
         }
     }
+
+
+def test_open_upload_loads_database_and_updates_session(sample_db: Path) -> None:
+    client = TestClient(create_app())
+
+    with sample_db.open("rb") as uploaded_file:
+        response = client.post(
+            "/api/open-upload",
+            files={"file": ("uploaded.sqlite", uploaded_file, "application/octet-stream")},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "db_loaded": True,
+        "db_label": "uploaded.sqlite",
+        "source_mode": "upload",
+        "tables": [
+            {"name": "course_summary"},
+            {"name": "records"},
+        ],
+    }
+
+    status_response = client.get("/api/status")
+    assert status_response.status_code == 200
+    assert status_response.json() == {
+        "db_loaded": True,
+        "db_label": "uploaded.sqlite",
+        "source_mode": "upload",
+    }
+
+    tables_response = client.get("/api/tables")
+    assert tables_response.status_code == 200
+    assert tables_response.json() == {
+        "tables": [
+            {"name": "course_summary"},
+            {"name": "records"},
+        ]
+    }
+
+
+def test_invalid_upload_preserves_last_known_good_database(sample_db: Path) -> None:
+    client = TestClient(
+        create_app(
+            config=AppConfig(
+                db_path=sample_db,
+                db_label="demo/test.sqlite",
+            )
+        )
+    )
+
+    response = client.post(
+        "/api/open-upload",
+        files={"file": ("broken.sqlite", b"not a sqlite database", "application/octet-stream")},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "error": {
+            "code": "invalid_sqlite_file",
+            "message": "The selected file could not be opened as a SQLite database.",
+        }
+    }
+
+    status_response = client.get("/api/status")
+    assert status_response.status_code == 200
+    assert status_response.json() == {
+        "db_loaded": True,
+        "db_label": "demo/test.sqlite",
+        "source_mode": "path",
+    }
+
+    tables_response = client.get("/api/tables")
+    assert tables_response.status_code == 200
+    assert tables_response.json() == {
+        "tables": [
+            {"name": "course_summary"},
+            {"name": "records"},
+        ]
+    }

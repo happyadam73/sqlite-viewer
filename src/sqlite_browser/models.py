@@ -22,6 +22,13 @@ class TablesResponse(BaseModel):
     tables: list[TableSummary]
 
 
+class OpenUploadResponse(BaseModel):
+    db_loaded: bool
+    db_label: str
+    source_mode: SourceMode
+    tables: list[TableSummary]
+
+
 class SchemaColumn(BaseModel):
     name: str
     type: str

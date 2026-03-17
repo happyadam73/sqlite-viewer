@@ -33,12 +33,12 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 
 ## Milestone 4 - Browser Upload Flow
 
-- [ ] Add the browser-native file picker flow behind the `open-file-button` control.
-- [ ] Implement `POST /api/open-upload` with multipart handling, temp-copy storage, and active-session replacement.
-- [ ] Preserve the last known good state when an upload fails validation or cannot be opened as SQLite.
-- [ ] Return consistent API error payloads with stable error codes and actionable messages.
-- [ ] Update the UI after successful upload to refresh the DB label, source mode, tables, and selected-table state.
-- [ ] Verify a user can start with no DB, upload `demo/test.sqlite`, and browse without restarting the app.
+- [x] Add the browser-native file picker flow behind the `open-file-button` control.
+- [x] Implement `POST /api/open-upload` with multipart handling, temp-copy storage, and active-session replacement.
+- [x] Preserve the last known good state when an upload fails validation or cannot be opened as SQLite.
+- [x] Return consistent API error payloads with stable error codes and actionable messages.
+- [x] Update the UI after successful upload to refresh the DB label, source mode, tables, and selected-table state.
+- [x] Verify a user can start with no DB, upload `demo/test.sqlite`, and browse without restarting the app.
 
 ## Milestone 5 - UX Polish And Theming
 
