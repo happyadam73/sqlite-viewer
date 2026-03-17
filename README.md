@@ -40,6 +40,12 @@ python -m sqlite_browser
 
 Then use the **Open SQLite file** button in the browser.
 
+For pagination and sticky-grid smoke checks, you can also launch the richer demo fixture:
+
+```bash
+python -m sqlite_browser --db demo/gps-course.sqlite
+```
+
 ## Development
 
 Run tests:

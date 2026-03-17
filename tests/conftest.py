@@ -7,9 +7,20 @@ from pathlib import Path
 import pytest
 
 SRC = Path(__file__).resolve().parents[1] / "src"
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+
+
+@pytest.fixture(scope="session")
+def demo_test_db_path() -> Path:
+    return REPO_ROOT / "demo" / "test.sqlite"
+
+
+@pytest.fixture(scope="session")
+def gps_course_db_path() -> Path:
+    return REPO_ROOT / "demo" / "gps-course.sqlite"
 
 
 @pytest.fixture

@@ -120,6 +120,59 @@ def test_milestone_two_api_happy_path(sample_db: Path) -> None:
     }
 
 
+def test_startup_with_repo_gps_course_database_supports_paginated_rows(
+    gps_course_db_path: Path,
+) -> None:
+    client = TestClient(
+        create_app(
+            config=AppConfig(
+                db_path=gps_course_db_path,
+                db_label="demo/gps-course.sqlite",
+            )
+        )
+    )
+
+    status_response = client.get("/api/status")
+    assert status_response.status_code == 200
+    assert status_response.json() == {
+        "db_loaded": True,
+        "db_label": "demo/gps-course.sqlite",
+        "source_mode": "path",
+    }
+
+    tables_response = client.get("/api/tables")
+    assert tables_response.status_code == 200
+    assert tables_response.json() == {
+        "tables": [
+            {"name": "course_points"},
+            {"name": "course_summary"},
+            {"name": "records"},
+        ]
+    }
+
+    rows_response = client.get("/api/tables/records/rows", params={"page": 2, "page_size": 100})
+    assert rows_response.status_code == 200
+    payload = rows_response.json()
+    assert payload["table_name"] == "records"
+    assert payload["columns"] == [
+        "id",
+        "timestamp",
+        "distance_m",
+        "position_lat",
+        "position_long",
+        "altitude_m",
+    ]
+    assert payload["page"] == 2
+    assert payload["page_size"] == 100
+    assert payload["total_rows"] == 2169
+    assert payload["total_pages"] == 22
+    assert payload["has_previous"] is True
+    assert payload["has_next"] is True
+    assert len(payload["rows"]) == 100
+    assert payload["rows"][0] == [101, "2024-08-16T00:09:34", 4145.2, 51.2134509, -2.774414, 13.0]
+    assert payload["rows"][-1] == [200, "2024-08-16T00:20:46", 8374.23, 51.2052679, -2.7199429, 20.0]
+
+
 def test_invalid_table_returns_404(sample_db: Path) -> None:
     client = TestClient(create_app(config=AppConfig(db_path=sample_db, db_label="demo/test.sqlite")))
 

@@ -18,6 +18,16 @@ def test_validate_database_file_accepts_supported_sqlite(sample_db: Path) -> Non
     assert validate_database_file(sample_db) == sample_db.resolve()
 
 
+@pytest.mark.parametrize("fixture_name", ["demo_test_db_path", "gps_course_db_path"])
+def test_validate_database_file_accepts_repo_demo_databases(
+    fixture_name: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    db_path = request.getfixturevalue(fixture_name)
+
+    assert validate_database_file(db_path) == db_path.resolve()
+
+
 def test_validate_database_file_rejects_unsupported_extension(tmp_path: Path) -> None:
     invalid_path = tmp_path / "not-a-db.txt"
     invalid_path.write_text("plain text", encoding="utf-8")
@@ -44,6 +54,12 @@ def test_list_tables_returns_only_user_tables(sample_db: Path) -> None:
     assert [table.name for table in tables] == ["course_summary", "records"]
 
 
+def test_list_tables_returns_expected_gps_course_tables(gps_course_db_path: Path) -> None:
+    tables = list_tables(gps_course_db_path)
+
+    assert [table.name for table in tables] == ["course_points", "course_summary", "records"]
+
+
 def test_get_table_schema_returns_column_metadata(sample_db: Path) -> None:
     schema = get_table_schema(sample_db, "records")
     columns_by_name = {column.name: column for column in schema.columns}
@@ -66,6 +82,29 @@ def test_get_table_rows_returns_preview_rows(sample_db: Path) -> None:
     assert preview.total_pages == 2
     assert preview.has_previous is True
     assert preview.has_next is False
+
+
+def test_get_table_rows_supports_repo_demo_pagination(gps_course_db_path: Path) -> None:
+    preview = get_table_rows(gps_course_db_path, "records", page=2, page_size=100)
+
+    assert preview.table_name == "records"
+    assert preview.columns == [
+        "id",
+        "timestamp",
+        "distance_m",
+        "position_lat",
+        "position_long",
+        "altitude_m",
+    ]
+    assert len(preview.rows) == 100
+    assert preview.rows[0] == [101, "2024-08-16T00:09:34", 4145.2, 51.2134509, -2.774414, 13.0]
+    assert preview.rows[-1] == [200, "2024-08-16T00:20:46", 8374.23, 51.2052679, -2.7199429, 20.0]
+    assert preview.page == 2
+    assert preview.page_size == 100
+    assert preview.total_rows == 2169
+    assert preview.total_pages == 22
+    assert preview.has_previous is True
+    assert preview.has_next is True
 
 
 def test_get_table_rows_caps_requested_page_size(sample_db: Path) -> None:

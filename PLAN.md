@@ -54,9 +54,9 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 
 ## Milestone 6 - Tests, Demo Data, And Release Readiness
 
-- [ ] Add a representative `demo/test.sqlite` fixture and any supporting demo notes needed for smoke testing.
-- [ ] Add pytest unit coverage for DB validation, table discovery, schema extraction, paginated row preview logic, and invalid-table handling.
-- [ ] Add pytest API coverage for startup modes, status, tables, schema, paginated rows, upload, and no-DB error cases.
-- [ ] Ensure the UI exposes the required `data-testid` selectors for Playwright-driven scenarios.
-- [ ] Run and fix `pytest`, `ruff check .`, and `mypy src` for the implemented codebase.
-- [ ] Perform the manual smoke path and the required Playwright scenarios for empty startup, upload, schema expand, sticky-header row browsing, pagination/page-size controls, theme toggle, splitter drag, and invalid upload.
+- [x] Maintain representative demo fixtures at `demo/test.sqlite` and `demo/gps-course.sqlite`, plus supporting demo notes for smoke testing and pagination/sticky-grid scenarios.
+- [x] Add pytest unit coverage for DB validation, table discovery, schema extraction, paginated row preview logic, and invalid-table handling.
+- [x] Add pytest API coverage for startup modes, status, tables, schema, paginated rows, upload, and no-DB error cases.
+- [x] Ensure the UI exposes the required `data-testid` selectors for Playwright-driven scenarios.
+- [x] Run and fix `pytest`, `ruff check .`, and `mypy src` for the implemented codebase.
+- [x] Perform the manual smoke path and the required Playwright scenarios for empty startup, upload, schema expand, sticky-header row browsing, pagination/page-size controls using `demo/gps-course.sqlite`, theme toggle, splitter drag, and invalid upload.
