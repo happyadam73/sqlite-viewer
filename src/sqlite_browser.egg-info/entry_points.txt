@@ -1,0 +1,2 @@
+[console_scripts]
+sqlite-browser = sqlite_browser.cli:main

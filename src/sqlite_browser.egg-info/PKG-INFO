@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: sqlite-browser
+Version: 0.1.0
+Summary: Lightweight local web app for browsing SQLite files in the browser
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: uvicorn<1.0,>=0.30
+Requires-Dist: jinja2<4.0,>=3.1
+Requires-Dist: python-multipart<1.0,>=0.0.9
+Provides-Extra: dev
+Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
+Requires-Dist: httpx<1.0,>=0.27; extra == "dev"
+Requires-Dist: ruff<1.0,>=0.6; extra == "dev"
+Requires-Dist: mypy<2.0,>=1.10; extra == "dev"
+
 # SQLite Browser
 
 A lightweight local web app for browsing SQLite files in the browser.
@@ -64,5 +80,5 @@ make check
 
 Create the local virtualenv and launch the app:
 ```bash
-make run
+make -f Makefile.run run
 ```

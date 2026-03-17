@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+  </head>
+  <body>
+    <div class="app-shell" data-testid="app-shell">
+      <header class="top-bar">
+        <div class="brand-block">
+          <p class="eyebrow">Local SQLite Browser</p>
+          <h1>Inspect local databases without leaving the browser.</h1>
+        </div>
+        <div class="top-bar__controls">
+          <div class="db-label" data-testid="current-db-label">{{ current_db_label }}</div>
+          <button
+            class="primary-button"
+            data-action="open-file"
+            data-testid="open-file-button"
+            type="button"
+          >
+            Open SQLite file
+          </button>
+          <button class="secondary-button" data-testid="theme-toggle" type="button">
+            Toggle theme
+          </button>
+        </div>
+        <input
+          id="db-file-input"
+          accept=".sqlite,.sqlite3,.db"
+          hidden
+          type="file"
+        >
+      </header>
+
+      <div class="status-strip">
+        <div data-testid="loading-indicator" hidden>Loading</div>
+        <div data-testid="error-banner" hidden role="alert"></div>
+      </div>
+
+      <main class="workspace">
+        <section class="pane pane--explorer" data-testid="explorer-pane">
+          <div class="pane__header">
+            <p class="pane__eyebrow">Explorer</p>
+            <h2>Tables</h2>
+          </div>
+          <div class="pane__body">
+            <ul class="table-list" data-testid="table-list"></ul>
+            <p class="pane__hint">Table and schema details will appear here once a database is loaded.</p>
+          </div>
+        </section>
+
+        <div class="pane-splitter" data-testid="pane-splitter" aria-hidden="true"></div>
+
+        <section class="pane pane--data" data-testid="data-pane">
+          <div class="pane__header">
+            <p class="pane__eyebrow">Preview</p>
+            <h2 data-testid="selected-table-title">No table selected</h2>
+          </div>
+
+          <div class="empty-state" data-testid="empty-state">
+            <div class="empty-state__card">
+              <p class="eyebrow">Start Here</p>
+              <h3>No database loaded yet</h3>
+              <p>
+                Launch the app with a SQLite path or use the browser file picker once upload support is connected.
+              </p>
+              <button class="primary-button" data-action="open-file" type="button">
+                Choose SQLite file
+              </button>
+            </div>
+          </div>
+
+          <section class="data-grid" data-testid="data-grid" aria-label="Database preview grid">
+            <div class="data-grid__header" data-testid="data-grid-header">
+              <div class="grid-cell grid-cell--placeholder">Column headers will appear here.</div>
+            </div>
+            <div class="data-grid__body" data-testid="data-grid-body">
+              <div class="grid-row">
+                <div class="grid-cell grid-cell--placeholder">
+                  Row previews will appear here after a table is selected.
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', path='app.js') }}"></script>
+  </body>
+</html>
