@@ -15,12 +15,12 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 
 ## Milestone 2 - Read-Only SQLite Core And CLI DB Loading
 
-- [ ] Implement SQLite file validation for supported extensions: `.sqlite`, `.sqlite3`, and `.db`.
-- [ ] Implement read-only connection handling with safe table discovery, schema inspection, and row preview queries.
-- [ ] Add session state for the active database label and source mode for startup via `--db`.
-- [ ] Support CLI options for `--db`, `--host`, `--port`, and `--no-browser` with loopback defaults.
-- [ ] Add `GET /api/status`, `GET /api/tables`, `GET /api/tables/{table_name}/schema`, and `GET /api/tables/{table_name}/rows`.
-- [ ] Verify the happy path `python -m sqlite_browser --db demo/test.sqlite` loads tables and row previews.
+- [x] Implement SQLite file validation for supported extensions: `.sqlite`, `.sqlite3`, and `.db`.
+- [x] Implement read-only connection handling with safe table discovery, schema inspection, and row preview queries.
+- [x] Add session state for the active database label and source mode for startup via `--db`.
+- [x] Support CLI options for `--db`, `--host`, `--port`, and `--no-browser` with loopback defaults.
+- [x] Add `GET /api/status`, `GET /api/tables`, `GET /api/tables/{table_name}/schema`, and `GET /api/tables/{table_name}/rows`.
+- [x] Verify the happy path `python -m sqlite_browser --db demo/test.sqlite` loads tables and row previews.
 
 ## Milestone 3 - Explorer And Data Grid Interaction
 

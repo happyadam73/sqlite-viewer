@@ -62,14 +62,23 @@
 
           <div class="empty-state" data-testid="empty-state">
             <div class="empty-state__card">
-              <p class="eyebrow">Start Here</p>
-              <h3>No database loaded yet</h3>
-              <p>
-                Launch the app with a SQLite path or use the browser file picker once upload support is connected.
-              </p>
-              <button class="primary-button" data-action="open-file" type="button">
-                Choose SQLite file
-              </button>
+              {% if db_loaded %}
+                <p class="eyebrow">Database Ready</p>
+                <h3>No table selected</h3>
+                <p>
+                  This database was loaded at startup. Table browsing will populate here once the API-driven
+                  explorer is connected.
+                </p>
+              {% else %}
+                <p class="eyebrow">Start Here</p>
+                <h3>No database loaded yet</h3>
+                <p>
+                  Launch the app with a SQLite path or use the browser file picker once upload support is connected.
+                </p>
+                <button class="primary-button" data-action="open-file" type="button">
+                  Choose SQLite file
+                </button>
+              {% endif %}
             </div>
           </div>
 

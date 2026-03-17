@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from sqlite_browser.config import AppConfig
+from sqlite_browser.db import validate_database_file
 from sqlite_browser.routes.api import router as api_router
 from sqlite_browser.routes.pages import router as pages_router
 from sqlite_browser.session_store import SessionStore
@@ -21,6 +22,15 @@ def create_app(
 
     app_config = config or AppConfig()
     store = session_store or SessionStore()
+
+    if app_config.db_path is not None and store.get_active_db_path() is None:
+        validated_db_path = validate_database_file(app_config.db_path)
+        store.set_active_database(
+            validated_db_path,
+            label=app_config.db_label or str(app_config.db_path),
+            source_mode="path",
+        )
+
     package_dir = Path(__file__).resolve().parent
     templates = Jinja2Templates(directory=str(package_dir / "templates"))
 
