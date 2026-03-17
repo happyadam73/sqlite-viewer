@@ -69,3 +69,8 @@ def test_get_table_rows_returns_preview_rows(sample_db: Path) -> None:
 def test_get_table_schema_rejects_unknown_table(sample_db: Path) -> None:
     with pytest.raises(TableNotFoundError):
         get_table_schema(sample_db, "missing_table")
+
+
+def test_get_table_rows_rejects_unknown_table(sample_db: Path) -> None:
+    with pytest.raises(TableNotFoundError):
+        get_table_rows(sample_db, "missing_table")

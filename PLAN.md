@@ -24,12 +24,12 @@ When a checklist task is completed and verified, mark it done by changing `- [ ]
 
 ## Milestone 3 - Explorer And Data Grid Interaction
 
-- [ ] Implement frontend loading of app status, tables, schema details, and row previews from the JSON API.
-- [ ] Render expandable table items in the explorer and display schema metadata including PK and NOT NULL markers.
-- [ ] Render the selected table title, column headers, and preview rows in a scrollable data grid.
-- [ ] Validate requested table names against discovered schema before any schema or row query is executed.
-- [ ] Add clear empty, loading, and backend error states that do not crash the app.
-- [ ] Verify table expansion and table selection work reliably from a fresh page load.
+- [x] Implement frontend loading of app status, tables, schema details, and row previews from the JSON API.
+- [x] Render expandable table items in the explorer and display schema metadata including PK and NOT NULL markers.
+- [x] Render the selected table title, column headers, and preview rows in a scrollable data grid.
+- [x] Validate requested table names against discovered schema before any schema or row query is executed.
+- [x] Add clear empty, loading, and backend error states that do not crash the app.
+- [x] Verify table expansion and table selection work reliably from a fresh page load.
 
 ## Milestone 4 - Browser Upload Flow
 

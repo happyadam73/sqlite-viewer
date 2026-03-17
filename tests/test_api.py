@@ -131,3 +131,17 @@ def test_invalid_table_returns_404(sample_db: Path) -> None:
             "message": 'The table "missing_table" was not found in the active database.',
         }
     }
+
+
+def test_invalid_table_rows_returns_404(sample_db: Path) -> None:
+    client = TestClient(create_app(config=AppConfig(db_path=sample_db, db_label="demo/test.sqlite")))
+
+    response = client.get("/api/tables/missing_table/rows")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "error": {
+            "code": "table_not_found",
+            "message": 'The table "missing_table" was not found in the active database.',
+        }
+    }

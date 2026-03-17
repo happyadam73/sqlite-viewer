@@ -48,7 +48,9 @@
           </div>
           <div class="pane__body">
             <ul class="table-list" data-testid="table-list"></ul>
-            <p class="pane__hint">Table and schema details will appear here once a database is loaded.</p>
+            <p class="pane__hint" data-role="explorer-hint">
+              Table and schema details will appear here once a database is loaded.
+            </p>
           </div>
         </section>
 
@@ -58,24 +60,25 @@
           <div class="pane__header">
             <p class="pane__eyebrow">Preview</p>
             <h2 data-testid="selected-table-title">No table selected</h2>
+            <p class="pane__meta" data-role="selected-table-meta"></p>
           </div>
 
           <div class="empty-state" data-testid="empty-state">
             <div class="empty-state__card">
               {% if db_loaded %}
-                <p class="eyebrow">Database Ready</p>
-                <h3>No table selected</h3>
-                <p>
+                <p class="eyebrow" data-role="empty-state-eyebrow">Database Ready</p>
+                <h3 data-role="empty-state-title">No table selected</h3>
+                <p data-role="empty-state-copy">
                   This database was loaded at startup. Table browsing will populate here once the API-driven
                   explorer is connected.
                 </p>
               {% else %}
-                <p class="eyebrow">Start Here</p>
-                <h3>No database loaded yet</h3>
-                <p>
+                <p class="eyebrow" data-role="empty-state-eyebrow">Start Here</p>
+                <h3 data-role="empty-state-title">No database loaded yet</h3>
+                <p data-role="empty-state-copy">
                   Launch the app with a SQLite path or use the browser file picker once upload support is connected.
                 </p>
-                <button class="primary-button" data-action="open-file" type="button">
+                <button class="primary-button" data-action="open-file" data-role="empty-state-action" type="button">
                   Choose SQLite file
                 </button>
               {% endif %}
