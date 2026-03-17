@@ -323,10 +323,20 @@
     return cell;
   }
 
+  function setGridColumnCount(columnCount) {
+    if (!(dataGrid instanceof HTMLElement)) {
+      return;
+    }
+
+    dataGrid.style.setProperty("--grid-column-count", String(Math.max(1, columnCount)));
+  }
+
   function renderGridPlaceholder(headerText, bodyText) {
     if (!(dataGridHeader instanceof HTMLElement) || !(dataGridBody instanceof HTMLElement)) {
       return;
     }
+
+    setGridColumnCount(1);
 
     const headerRow = document.createElement("div");
     headerRow.className = "grid-row grid-row--header";
@@ -441,6 +451,8 @@
     ) {
       return;
     }
+
+    setGridColumnCount(payload.columns.length);
 
     const headerRow = document.createElement("div");
     headerRow.className = "grid-row grid-row--header";
