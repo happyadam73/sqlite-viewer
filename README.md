@@ -25,6 +25,10 @@ You can launch it with a database path for an immediate happy path, or start wit
 - switch between dark and light themes
 - keep the app safe by staying read-only
 
+## UI Preview
+
+![SQLite Browser application screenshot](docs/assets/screenshot.png)
+
 ## How It Works
 
 At runtime, the app follows a small same-origin flow:
